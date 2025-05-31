@@ -6,6 +6,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from rede_neural import RedeNeuralClassificador, ConfiguracaoRedeNeural
+from types import SimpleNamespace
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -24,15 +25,18 @@ class RedeNeuralAnalysis:
     
     def plotar_curvas_aprendizado(self):
         """Plota as curvas de aprendizado."""
-        if self.modelo.history is None:
+        # Verificar se o modelo foi treinado
+        if not hasattr(self.modelo.model, 'training_history') or not self.modelo.model.training_history['loss']:
             print("Erro: Modelo não foi treinado ainda!")
             return
+        
+        history = self.modelo.model.training_history
         
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=self.FIGURE_SIZE_MEDIUM)
         
         # Curva de Loss
-        ax1.plot(self.modelo.history.history['loss'], label='Treino', linewidth=2)
-        ax1.plot(self.modelo.history.history['val_loss'], label='Validação', linewidth=2)
+        ax1.plot(history['loss'], label='Treino', linewidth=2)
+        ax1.plot(history['val_loss'], label='Validação', linewidth=2)
         ax1.set_title('Curva de Loss', fontsize=14, fontweight='bold')
         ax1.set_xlabel('Épocas')
         ax1.set_ylabel('Loss')
@@ -40,8 +44,8 @@ class RedeNeuralAnalysis:
         ax1.grid(True, alpha=0.3)
         
         # Curva de Acurácia
-        ax2.plot(self.modelo.history.history['accuracy'], label='Treino', linewidth=2)
-        ax2.plot(self.modelo.history.history['val_accuracy'], label='Validação', linewidth=2)
+        ax2.plot(history['accuracy'], label='Treino', linewidth=2)
+        ax2.plot(history['val_accuracy'], label='Validação', linewidth=2)
         ax2.set_title('Curva de Acurácia', fontsize=14, fontweight='bold')
         ax2.set_xlabel('Épocas')
         ax2.set_ylabel('Acurácia')
@@ -310,12 +314,54 @@ Variabilidade:
         else:
             print("  → Concentração moderada")
     
+    def calcular_importancia_features(self, X_test, y_test):
+        """Calcula a importância das features usando permutation importance manual."""
+        print("Calculando importância das features...")
+        
+        # Acurácia base (sem permutação)
+        y_pred_base = self.modelo.model.predict_classes(X_test)
+        acc_base = accuracy_score(y_test, y_pred_base)
+        
+        # Importância por permutação
+        importancias_mean = np.zeros(X_test.shape[1])
+        importancias_std = np.zeros(X_test.shape[1])
+        
+        for i in range(X_test.shape[1]):
+            # Permutar a i-ésima feature
+            X_perm = X_test.copy()
+            np.random.shuffle(X_perm[:, i])
+            
+            # Calcular nova acurácia
+            y_pred_perm = self.modelo.model.predict_classes(X_perm)
+            acc_perm = accuracy_score(y_test, y_pred_perm)
+            
+            # Importância é a queda na acurácia
+            importancias_mean[i] = acc_base - acc_perm
+        
+        # Para estabilidade, calcular desvio padrão em múltiplas permutações
+        for i in range(X_test.shape[1]):
+            quedas_acuracia = []
+            
+            for _ in range(30):  # 30 repetições
+                X_perm = X_test.copy()
+                np.random.shuffle(X_perm[:, i])
+                
+                y_pred_perm = self.modelo.model.predict_classes(X_perm)
+                acc_perm = accuracy_score(y_test, y_pred_perm)
+                
+                quedas_acuracia.append(acc_base - acc_perm)
+            
+            importancias_std[i] = np.std(quedas_acuracia)
+        
+        return SimpleNamespace(importances_mean=importancias_mean, importances_std=importancias_std)
+    
     def visualizar_embeddings(self, X, y, metodo='pca'):
         """Visualiza embeddings usando PCA ou t-SNE."""
         print(f"Gerando visualização de embeddings ({metodo.upper()})...")
         
-        # Extrair embeddings
-        embeddings = self.modelo.extrair_embeddings(X)
+        # Para rede neural manual, extrair da penúltima camada
+        activations, _ = self.modelo.model.forward_propagation(X, training=False)
+        embeddings = activations[-2]  # Penúltima camada (antes do softmax)
         
         # Se os embeddings têm mais de 2 dimensões, reduzir dimensionalidade
         if embeddings.shape[1] > 50:  # Se tem muitas features, usar PCA primeiro
@@ -449,9 +495,8 @@ if __name__ == "__main__":
     
     # Executar análise completa
     feature_names = ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5', 'Feature 6']
-    resultados = analisador.executar_analise_completa('treino_sinais_vitais_com_label.csv', feature_names)
+    resultados = analisador.executar_analise_completa('treino_sinais_vitais_com_label.txt', feature_names)
     
     print("\nResultados finais:")
     print(f"Acurácia: {resultados['accuracy']:.4f}")
     print(f"F1-Score: {resultados['f1_score']:.4f}")
-    print(f"CV Scores: {np.mean(resultados['cv_scores']):.4f} (±{np.std(resultados['cv_scores']):.4f})")
