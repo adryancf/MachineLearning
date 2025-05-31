@@ -29,7 +29,7 @@ Os resultados incluem:
 
 ## 📝 Artigo Acadêmico
 
-O trabalho completo está documentado no artigo científico disponível em `docs/artigo_sbc.pdf`, seguindo o template SBC.
+O trabalho completo está documentado no artigo científico disponível em `ARTIGO_2_SI.pdf`, seguindo o template SBC.
 
 ---
 
