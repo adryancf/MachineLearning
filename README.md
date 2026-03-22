@@ -1,16 +1,16 @@
-# Análise Comparativa de Algoritmos de Aprendizagem de Máquina para Sinais Vitais
+# Comparative Analysis of Machine Learning Algorithms for Vital Signs
 
-Este repositório contém a implementação de três algoritmos de aprendizagem de máquina aplicados a um conjunto de dados de sinais vitais, desenvolvido como trabalho acadêmico para a disciplina de Sistemas Inteligentes.
+This repository contains the implementation of three machine learning algorithms applied to a vital signs dataset, developed as academic work for the Intelligent Systems course.
 
-## Descrição do Projeto
+## Project Description
 
-O projeto apresenta uma análise comparativa entre três abordagens distintas de aprendizagem de máquina:
+The project presents a comparative analysis between three distinct machine learning approaches:
 
-- **ID3** (Aprendizagem Simbólica - Árvores de Decisão)
-- **Random Forest** (Aprendizagem Ensemble)
-- **Redes Neurais** (Perceptron Multicamadas)
+- **ID3** (Symbolic Learning - Decision Trees)
+- **Random Forest** (Ensemble Learning)
+- **Neural Networks** (Multilayer Perceptron)
 
-## Artigo Acadêmico
+## Academic Paper
 
-O trabalho completo está documentado no artigo científico disponível em `ARTIGO_2_SI.pdf`, seguindo o template SBC.
+The complete work is documented in the scientific paper available in `ARTIGO_2_SI.pdf`, following the SBC template.
 
